@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECharts Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div id="chart" style="width: 600px; height: 400px;"></div>
+
+    <script>
+        // Fetch data from the backend
+        fetch('/api/data')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                // Transform data into ECharts format
+                const xAxisData = data.map(item => item.date); // Replace 'columnName'
+                const seriesData = data.map(item => item.total);     // Replace 'value'
+
+                // Initialize ECharts instance
+                const chart = echarts.init(document.getElementById('chart'));
+
+                // Set chart options
+                const options = {
+                    title: {
+                        text: 'Data Visualization',
+                    },
+                    tooltip: {},
+                    xAxis: {
+                        type: 'category',
+                        data: xAxisData,
+                    },
+                    yAxis: {
+                        type: 'value',
+                    },
+                    series: [
+                        {
+                            type: 'bar',
+                            data: seriesData,
+                        },
+                    ],
+                };
+
+                // Render the chart
+                chart.setOption(options);
+            })
+            .catch(err => console.error('Error fetching data:', err));
+    </script>
+</body>
+</html>
