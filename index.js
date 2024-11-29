@@ -22,14 +22,21 @@ const config = {
 // Endpoint to get data
 app.get('/api/data', async (req, res) => {
     try {
-        const dateCondition = queries.generateDateCondition(0,11,2024);
+        /*const dateCondition = queries.generateDateCondition(0,11,2024);
         const query = queries.getForfaitsTechnieker('MT', dateCondition);
-        //res.json(query);
+        
         const pool = await sql.connect(config);
         const result = await pool.request().query(query);
         
-        res.json(sortByDate(result.recordset));
-        sql.close();
+        res.json(result.recordset);
+        sql.close();*/
+
+        const fileContent = fs.readFileSync('./sqlData', 'utf8');
+        // Parse the content into JSON
+        const jsonData = JSON.parse(fileContent);
+        console.log(typeof jsonData);
+        res.json(jsonData);
+
     } catch (err) {
         console.error('Error fetching data:', err);
         res.status(500).send('Error fetching data');
@@ -92,7 +99,7 @@ async function writeDataToFile(){
     }
 }
 
-writeDataToFile();
+//writeDataToFile();
 
 /*async function connectToDatabase() {
     try {

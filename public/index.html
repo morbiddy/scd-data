@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECharts Visualization</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
+
 <body>
-    <div id="chart" style="width: 600px; height: 400px;"></div>
+    <div id="chart" style="width: 1200px; height: 400px;"></div>
 
     <script>
         // Fetch data from the backend
@@ -15,9 +17,28 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
+                console.log(typeof data);
+
+                const groupedData = {};
+
+                data.forEach(row => {
+                    const date = row.hersteld_op.split('T')[0]; // Format date as YYYY-MM-DD
+                    if (!groupedData[date]) {
+                        groupedData[date] = 0; // Initialize total for the date
+                    }
+                    groupedData[date] += Math.round(row.aantal * row.eenheidsprijs) * 100 / 100; // Add the forfaits value
+                });
+                console.log(groupedData);
+                // Convert grouped data into an array for the chart
+                const chartData = Object.entries(groupedData).map(([date, totalForfaits]) => ({
+                    date: date,
+                    total: totalForfaits,
+                }));
+
+
                 // Transform data into ECharts format
-                const xAxisData = data.map(item => item.date); // Replace 'columnName'
-                const seriesData = data.map(item => item.total);     // Replace 'value'
+                const xAxisData = chartData.map(item => item.date); // Replace 'columnName'
+                const seriesData = chartData.map(item => item.total);     // Replace 'value'
 
                 // Initialize ECharts instance
                 const chart = echarts.init(document.getElementById('chart'));
@@ -28,9 +49,12 @@
                         text: 'Data Visualization',
                     },
                     tooltip: {},
+                    dataSet: {
+                        source: chartData
+                    },
                     xAxis: {
                         type: 'category',
-                        data: xAxisData,
+                        
                     },
                     yAxis: {
                         type: 'value',
@@ -38,7 +62,7 @@
                     series: [
                         {
                             type: 'bar',
-                            data: seriesData,
+                            
                         },
                     ],
                 };
@@ -49,4 +73,5 @@
             .catch(err => console.error('Error fetching data:', err));
     </script>
 </body>
+
 </html>
