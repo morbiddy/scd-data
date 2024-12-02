@@ -9,9 +9,11 @@
 </head>
 
 <body>
-    <div id="chart" style="width: 1200px; height: 400px;"></div>
-
+    <div id="chart" style="width: auto; height: 400px;"></div>
+    <div id="chart2" style="width: auto; height: 400px;"></div>
+    <div id="chart3" style="width: auto; height: 600px;"></div>
     <script>
+
         // Fetch data from the backend
         fetch('/api/data')
             .then(response => response.json())
@@ -19,56 +21,173 @@
                 console.log(data);
                 console.log(typeof data);
 
-                const groupedData = {};
-
+                const groupedByDayTotal = {};
+                // group data by date and calculate the day total
                 data.forEach(row => {
                     const date = row.hersteld_op.split('T')[0]; // Format date as YYYY-MM-DD
-                    if (!groupedData[date]) {
-                        groupedData[date] = 0; // Initialize total for the date
+                    if (!groupedByDayTotal[date]) {
+                        groupedByDayTotal[date] = 0; // Initialize total for the date
                     }
-                    groupedData[date] += Math.round(row.aantal * row.eenheidsprijs) * 100 / 100; // Add the forfaits value
+                    groupedByDayTotal[date] += Math.round(row.aantal * row.eenheidsprijs); // Add the forfaits value
                 });
-                console.log(groupedData);
-                // Convert grouped data into an array for the chart
-                const chartData = Object.entries(groupedData).map(([date, totalForfaits]) => ({
-                    date: date,
-                    total: totalForfaits,
+                console.log(groupedByDayTotal);
+
+                // calc the average total
+                const totalValues = Object.values(groupedByDayTotal);
+                const averageValue = totalValues.reduce((sum, value) => sum + value, 0) / totalValues.length;
+
+                // transform the object into the desired format
+                /*const echartsData = [
+                    ['date', ...Object.keys(groupedByDayTotal)], // Dates as the first row
+                    ['total', ...totalValues],  // Totals as the second row
+                    ['average', ...Array(totalValues.length).fill(averageValue)], // Average as the third row
+                ];*/
+                //console.log(echartsData);
+
+                const dataChartDayTotal = Object.entries(groupedByDayTotal).map(([date, total]) => ({
+                    date,
+                    total,
+                    avg: Math.round(averageValue * 100) / 100,
                 }));
+                console.log(dataChartDayTotal);
 
+                // group data by merk
+                const groupedByBrandTotal = {};
+                data.forEach(row => {
+                    const merk = row.merk;
+                    if (!groupedByBrandTotal[merk]) {
+                        groupedByBrandTotal[merk] = 0;
+                    }
+                    groupedByBrandTotal[merk] += Math.round(row.aantal * row.eenheidsprijs);
+                });
+                console.log(groupedByBrandTotal);
 
-                // Transform data into ECharts format
-                const xAxisData = chartData.map(item => item.date); // Replace 'columnName'
-                const seriesData = chartData.map(item => item.total);     // Replace 'value'
+                const dataChartBrandTotal = Object.entries(groupedByBrandTotal).map(([brand, total]) => ({
+                    brand,
+                    total
+                }));
+                console.log(dataChartBrandTotal);
 
-                // Initialize ECharts instance
+                // Initialize chart year day total
                 const chart = echarts.init(document.getElementById('chart'));
 
                 // Set chart options
                 const options = {
                     title: {
-                        text: 'Data Visualization',
+                        text: '2024: Forfaits per dag',
                     },
                     tooltip: {},
-                    dataSet: {
-                        source: chartData
+                    dataset: {
+                        source: dataChartDayTotal
                     },
                     xAxis: {
                         type: 'category',
-                        
                     },
-                    yAxis: {
-                        type: 'value',
-                    },
+                    yAxis: {},
                     series: [
-                        {
-                            type: 'bar',
-                            
-                        },
+                        { type: 'bar' },    // for total
+                        { type: 'line' }    // for average
                     ],
                 };
 
                 // Render the chart
                 chart.setOption(options);
+
+                // init chart2 brand year total
+                const chart2 = echarts.init(document.getElementById('chart2'));
+
+                // set chart2 options
+                const optionsCh2 = {
+                    title: { text: '2024: Forfaits per merk', },
+                    tooltip: {},
+                    dataset: [
+                        {
+                            dimensions: ['brand', 'total'],
+                            source: dataChartBrandTotal,
+                        },
+                        {
+                            transform: {
+                                type: 'sort',
+                                config: { dimension: 'total', order: 'desc' },
+                                print: true
+                            }
+                        }
+                    ],
+                    dataZoom: [
+                        { type: 'inside', start: 0, end: 50 },
+                        { type: 'slider', start: 0, end: 50 }
+                    ],
+                    xAxis: {
+                        type: 'category',
+                        axisLabel: { interval: 0, rotate: 30 }
+                    },
+                    yAxis: {
+
+                    },
+                    series: {
+                        type: 'bar',
+                        datasetIndex: 1
+                    },
+
+                };
+                chart2.setOption(optionsCh2);
+
+                // init chart2 brand year total
+                const chart3 = echarts.init(document.getElementById('chart3'));
+
+                // set chart2 options
+                const optionsCh3 = {
+                    title: {
+                        text: '2024 Total Breakdown by Brand',
+                        left: 'left',
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: function (params) {
+                            //console.log(params); // Debugging: Inspect the tooltip parameters
+                            return `${params.seriesName} <br/>${params.name}: ${params.value.total} (${params.percent}%)`;
+                        },
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'right',
+                    },
+                    dataset: [
+                        {
+                            dimensions: ['brand', 'total'],
+                            source: dataChartBrandTotal,
+                        },
+                        {
+                            transform: {
+                                type: 'sort',
+                                config: { dimension: 'total', order: 'desc' },
+                            }
+                        }
+                    ],
+                    series: [
+                        {
+                            name: 'Brands',
+                            type: 'pie',
+                            radius: '50%',
+                            encode: { itemName: 'brand', value: 'total' },
+                            datasetIndex: 1,
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                },
+                            },
+                        },
+                    ],
+                };
+
+                chart3.setOption(optionsCh3);
+
+                window.addEventListener('resize', function () {
+                    chart.resize();
+                    chart2.resize();
+                });
             })
             .catch(err => console.error('Error fetching data:', err));
     </script>
