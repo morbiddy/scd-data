@@ -80,17 +80,17 @@ function sortByDate(recordset){
     return chartData;
 }
 
-async function writeDataToFile(){
+async function writeYearDataToFile(year){
     try{
         const pool = await sql.connect(config);
         console.log('Connected to the database!');
 
-        const query = queries.getForfaitsAll('2024');
+        const query = queries.getForfaitsAll(year);
         const result = await pool.request().query(query);
         const records = result.recordset;
         const jsonData = JSON.stringify(records, null, 2);
 
-        fs.writeFileSync('./sqlData', jsonData, 'utf8');
+        fs.writeFileSync('./sqlData'+year, jsonData, 'utf8');
         //console.log(result);
         sql.close();
     }
@@ -99,7 +99,7 @@ async function writeDataToFile(){
     }
 }
 
-//writeDataToFile();
+//writeYearDataToFile('2013');
 
 /*async function connectToDatabase() {
     try {

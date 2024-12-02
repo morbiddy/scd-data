@@ -5,7 +5,8 @@ module.exports = {
         return query = `
         SELECT 
             h.garantie, 
-            h.merk, 
+            h.merk,
+            h.type, 
             hl.produkt, 
             hl.eenheidsprijs, 
             hl.aantal, 
