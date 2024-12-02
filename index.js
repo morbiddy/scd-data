@@ -19,6 +19,19 @@ const config = {
     },
 };
 
+/*
+    Calc 10€ extra mar, den warranty
+    if (herstelling["merk"].Equals("MAR") || herstelling["merk"].Equals("DEN"))
+    {
+        if (herstelling["garantie"].Equals("OWB") ||
+            herstelling["garantie"].Equals("U") ||
+            herstelling["garantie"].Equals("ROW"))
+        {
+            if (!hNummers.Contains(herstelling["nummer"].ToString())) tmpTotaal += 10;
+        }
+    }
+*/
+
 // Endpoint to get data
 app.get('/api/data', async (req, res) => {
     try {
